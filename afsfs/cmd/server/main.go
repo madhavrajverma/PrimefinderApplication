@@ -44,7 +44,7 @@ func main() {
 
 	startAsPrimary := *primary
 	if startAsPrimary {
-		existing := findExistingPrimary(peerInfos, addr)
+		existing := findExistingPrimary(peerInfos)
 		if existing != "" && existing != addr {
 			log.Printf("server %s: another primary exists at %s — starting as BACKUP", *id, existing)
 			startAsPrimary = false
@@ -75,7 +75,7 @@ func main() {
 	}
 }
 
-func findExistingPrimary(peers []server.PeerInfo, myAddr string) string {
+func findExistingPrimary(peers []server.PeerInfo) string {
 	for _, p := range peers {
 		conn, err := grpc.NewClient(p.Addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {

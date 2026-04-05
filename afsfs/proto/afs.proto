@@ -14,33 +14,29 @@ service AFSService {
   rpc CloseFile  (CloseFileRequest)  returns (CloseFileResponse);
 
   
-  //Large file transfer — streaming RPCs 
-  // FetchFile and StoreFile use streaming so files of any size (GB, TB) are transferred in 1MB chunks. No gRPC message size limit applies.
 
-  // Server streams FetchFileResponse chunks to client (server → client)
   rpc FetchFile  (FetchFileRequest)       returns (stream FetchFileResponse);
 
-  // Client streams StoreFileRequest chunks to server (client → server)
+
   rpc StoreFile  (stream StoreFileRequest) returns (StoreFileResponse);
 
-  // ── Replication — primary to backups ─────────────────────────────────────
-  // Client (primary) streams ReplicateRequest chunks to backup server
+
 
   rpc Replicate (stream ReplicateRequest) returns (ReplicateResponse);
 
-  // ── Cluster management ───────────────────────────────────────────────────
+
 
   rpc Heartbeat       (HeartbeatRequest)       returns (HeartbeatResponse);
   rpc GetPrimary      (GetPrimaryRequest)       returns (GetPrimaryResponse);
   rpc AnnouncePrimary (AnnouncePrimaryRequest)  returns (AnnouncePrimaryResponse);
 
-  // ── Recovery — primary streams files to recovering server ────────────────
+
 
   rpc SyncState (SyncStateRequest) returns (stream SyncFileEntry);
 }
 
 
-// ── Open ─────────────────────────────────────────────────────────────────────
+
 
 message OpenRequest {
   string path      = 1;
@@ -55,22 +51,18 @@ message OpenResponse {
 }
 
 
-// ── FetchFile — server streaming ─────────────────────────────────────────────
-// Server sends file data in 1MB chunks as FetchFileResponse messages.
-// Version is set on every chunk. io.EOF signals end of file.
 
 message FetchFileRequest {
   string path = 1;
 }
 
 message FetchFileResponse {
-  bytes  data    = 1;   // up to 1MB of file data per chunk
-  int64  version = 2;   // current file version (set on every chunk)
-  string error   = 3;   // non-empty only on error chunk
+  bytes  data    = 1;   
+  int64  version = 2;   
+  string error   = 3;   
 }
 
 
-// ── TestAuth ─────────────────────────────────────────────────────────────────
 
 message TestAuthRequest {
   string path           = 1;
@@ -83,16 +75,12 @@ message TestAuthResponse {
 }
 
 
-// ── StoreFile — client streaming ─────────────────────────────────────────────
-// Client sends file data in 1MB chunks as StoreFileRequest messages.
-// First chunk carries Path + ClientId + ReqSeq metadata.
-// All chunks carry Data. CloseAndRecv() signals end of file.
 
 message StoreFileRequest {
-  string path      = 1;  // set in first chunk only
-  bytes  data      = 2;  // up to 1MB of file data per chunk
-  string client_id = 3;  // set in first chunk only (for dedup)
-  int64  req_seq   = 4;  // set in first chunk only (for dedup)
+  string path      = 1;  
+  bytes  data      = 2;  
+  string client_id = 3;  
+  int64  req_seq   = 4;  
 }
 
 message StoreFileResponse {
@@ -101,7 +89,6 @@ message StoreFileResponse {
 }
 
 
-// ── CreateFile ───────────────────────────────────────────────────────────────
 
 message CreateFileRequest {
   string path      = 1;
@@ -115,7 +102,6 @@ message CreateFileResponse {
 }
 
 
-// ── DeleteFile ───────────────────────────────────────────────────────────────
 
 message DeleteFileRequest {
   string path      = 1;
@@ -128,7 +114,6 @@ message DeleteFileResponse {
 }
 
 
-// ── CloseFile ────────────────────────────────────────────────────────────────
 
 message CloseFileRequest {
   int64 file_handle_id = 1;
@@ -139,17 +124,12 @@ message CloseFileResponse {
 }
 
 
-// ── Replicate — client streaming (primary → backup) ──────────────────────────
-// Primary streams ReplicateRequest chunks to each backup in parallel.
-// First chunk carries Operation + Path + Version metadata.
-// Store operation: subsequent chunks carry Data (1MB each).
-// Delete/Create: single chunk, no data.
 
 message ReplicateRequest {
-  string operation = 1;  // "store", "create", "delete" — set in first chunk
-  string path      = 2;  // filename — set in first chunk
-  int64  version   = 3;  // file version — set in first chunk
-  bytes  data      = 4;  // file data chunk (store only)
+  string operation = 1;  
+  string path      = 2;  
+  int64  version   = 3;  
+  bytes  data      = 4;  
 }
 
 message ReplicateResponse {
@@ -157,7 +137,6 @@ message ReplicateResponse {
 }
 
 
-// ── Heartbeat ────────────────────────────────────────────────────────────────
 
 message HeartbeatRequest {
   string server_id = 1;
@@ -169,7 +148,6 @@ message HeartbeatResponse {
 }
 
 
-// ── GetPrimary ───────────────────────────────────────────────────────────────
 
 message GetPrimaryRequest {}
 
@@ -179,25 +157,19 @@ message GetPrimaryResponse {
 }
 
 
-// ── SyncState — server streaming (primary → recovering server) ───────────────
-// Primary streams one SyncFileEntry per chunk per file.
-// Path and Version are set on the first chunk of each file.
-// Subsequent chunks of the same file have Path = "".
-// New file starts when Path != "".
-// io.EOF signals all files sent.
+
 
 message SyncStateRequest {
   string server_id = 1;
 }
 
 message SyncFileEntry {
-  string path    = 1;  // filename — set on first chunk of each file
-  bytes  data    = 2;  // file data chunk (1MB)
-  int64  version = 3;  // file version — set on first chunk of each file
+  string path    = 1;  
+  bytes  data    = 2;  
+  int64  version = 3;  
 }
 
 
-// ── AnnouncePrimary ──────────────────────────────────────────────────────────
 
 message AnnouncePrimaryRequest {
   string primary_addr = 1;
