@@ -1,0 +1,276 @@
+networks:
+  primescience:
+    driver: bridge
+
+services:
+
+  # AFS FILESYSTEM SERVERS
+
+  s1:
+    build:
+      context: ./afsfs
+      dockerfile: Dockerfile
+    container_name: s1
+    hostname: s1
+    networks: [primescience]
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./afsfs/testdata/input:/data/input
+      - ./afsfs/testdata/output-s1:/data/output
+    command: >
+      ./bin/server
+      -id s1 -host s1 -port 50051
+      -primary=true
+      -peers s2=s2:50052,s3=s3:50053
+      -inputDir /data/input
+      -outputDir /data/output
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "50051"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  s2:
+    build:
+      context: ./afsfs
+      dockerfile: Dockerfile
+    container_name: s2
+    hostname: s2
+    networks: [primescience]
+    ports:
+      - "50052:50052"
+    volumes:
+      - ./afsfs/testdata/input:/data/input
+      - ./afsfs/testdata/output-s2:/data/output
+    command: >
+      ./bin/server
+      -id s2 -host s2 -port 50052
+      -primary=false
+      -peers s1=s1:50051,s3=s3:50053
+      -inputDir /data/input
+      -outputDir /data/output
+    restart: "no"
+    depends_on:
+      s1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "50052"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  s3:
+    build:
+      context: ./afsfs
+      dockerfile: Dockerfile
+    container_name: s3
+    hostname: s3
+    networks: [primescience]
+    ports:
+      - "50053:50053"
+    volumes:
+      - ./afsfs/testdata/input:/data/input
+      - ./afsfs/testdata/output-s3:/data/output
+    command: >
+      ./bin/server
+      -id s3 -host s3 -port 50053
+      -primary=false
+      -peers s1=s1:50051,s2=s2:50052
+      -inputDir /data/input
+      -outputDir /data/output
+    restart: "no"
+    depends_on:
+      s1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "50053"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  
+  # PRIME FINDING WORKERS (8 workers for test5a scaling test)
+
+
+  worker1:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: worker1
+    hostname: worker1
+    networks: [primescience]
+    ports:
+      - "6001:6001"
+      - "6101:6100"
+    command: ./bin/worker -id w1 -port 6001 -snapshotPort 6100
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker2:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: worker2
+    hostname: worker2
+    networks: [primescience]
+    ports:
+      - "6002:6001"
+      - "6102:6100"
+    command: ./bin/worker -id w2 -port 6001 -snapshotPort 6100
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker3:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: worker3
+    hostname: worker3
+    networks: [primescience]
+    ports:
+      - "6003:6001"
+      - "6103:6100"
+    command: ./bin/worker -id w3 -port 6001 -snapshotPort 6100
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker4:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: worker4
+    hostname: worker4
+    networks: [primescience]
+    ports:
+      - "6004:6001"
+      - "6104:6100"
+    command: ./bin/worker -id w4 -port 6001 -snapshotPort 6100
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker5:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: worker5
+    hostname: worker5
+    networks: [primescience]
+    ports:
+      - "6005:6001"
+      - "6105:6100"
+    command: ./bin/worker -id w5 -port 6001 -snapshotPort 6100
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker6:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: worker6
+    hostname: worker6
+    networks: [primescience]
+    ports:
+      - "6006:6001"
+      - "6106:6100"
+    command: ./bin/worker -id w6 -port 6001 -snapshotPort 6100
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker7:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: worker7
+    hostname: worker7
+    networks: [primescience]
+    ports:
+      - "6007:6001"
+      - "6107:6100"
+    command: ./bin/worker -id w7 -port 6001 -snapshotPort 6100
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker8:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: worker8
+    hostname: worker8
+    networks: [primescience]
+    ports:
+      - "6008:6001"
+      - "6108:6100"
+    command: ./bin/worker -id w8 -port 6001 -snapshotPort 6100
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "6001"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  
+  # COORDINATOR
+
+
+  coordinator:
+    build:
+      context: .
+      dockerfile: primefinder/Dockerfile
+    container_name: coordinator
+    hostname: coordinator
+    networks: [primescience]
+    command: >
+      ./bin/coordinator
+      -afs s1:50051,s2:50052,s3:50053
+      -workers worker1:6001,worker2:6001,worker3:6001
+      -cacheDir /tmp/coord-cache
+      -output primes.txt
+    profiles: [run]
+
+ 
+  # TEST RUNNER
+
+  tester:
+    image: golang:1.24-alpine
+    container_name: tester
+    hostname: tester
+    networks: [primescience]
+    volumes:
+      - ./primefinder:/app
+      - ./afsfs:/afsfs
+    working_dir: /app
+    environment:
+      - GOPATH=/go
+      - GOCACHE=/tmp/go-cache
+    restart: "no"
+    profiles: [test]

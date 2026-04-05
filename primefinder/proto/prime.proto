@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package prime;
+
+option go_package = "primefinder/generated/prime";
+
+service WorkerService {
+
+
+  rpc ProcessFile (ProcessFileRequest) returns (stream ProcessFileResponse);
+
+  rpc Health (HealthRequest) returns (HealthResponse);
+}
+
+message ProcessFileRequest {
+  string file_path   = 1;
+  string afs_servers = 2;
+  string cache_dir   = 3;
+  string worker_id   = 4;
+}
+
+
+message ProcessFileResponse {
+  repeated uint64 primes     = 1; 
+  string          error      = 2; 
+  int64           count      = 3; 
+  int64           elapsed_ms = 4; 
+}
+
+message HealthRequest {
+  string worker_id = 1;
+}
+
+message HealthResponse {
+  bool   alive     = 1;
+  string worker_id = 2;
+}
